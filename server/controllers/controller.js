@@ -14,6 +14,8 @@ var UsuarioSchema = new mongoose.Schema({
 var EventoSchema = new mongoose.Schema({
     eventId: Number,
     event: String,
+    started: Date, 
+    vallid: Boolean,
     location: {
         street: String,
         district: String,
@@ -31,7 +33,6 @@ var EventoSchema = new mongoose.Schema({
     },
     views: Number, 
     helps: Number,
-    vallid: Boolean
 })
 
 var Usuario = mongoose.model('Usuario', UsuarioSchema);
@@ -66,16 +67,59 @@ const Controller = class{
     }
 
     static async cadastraEvento(evento) {
-        console.log("Cadastrando evento")
-        var max
-        await Evento.findOne({eventId : 1} ).sort(last_mod, 1).run(function (err, result){
-            max = result.last_mod.eventId
+        
+        let max =  await Evento.findOne().sort("-eventId")
+        console.log(max)
 
-        })
-        console.log("Maximo : " + max)
-        let NovoEvento = new Evento()
+        if(max != null) evento.eventId = max.eventId + 1 
+        else evento.eventId = 1 
+
+        let novoEvento =  new Evento(evento)
+        await novoEvento.save()
     }
+
+    static async pegaTodosEventos() {
+
+        let eventos =  await Evento.find({})
+
+        eventosFiltrados = eventos.map( event => {
+            return {
+                eventId :event.eventId,
+                event: event.event,
+                started: event.started,
+                valid: event.valid
+            }
+        })
+        return eventosFiltrados
+    }
+
+    static async pegaEvento(id) {
+
+        
+        evento  = await Event.find({eventId : id})
+        evento.views = evento.views + 1 
+
+        evento.update({eventId: evento.eventId}, {views: evento.views})
+        return evento 
+
+    }
+
+    static async ajuda(id) {
+
+        evento = await Event.find({eventId : id})
+
+        evento.helps = evento.helps++ 
+        if(evento.helps < 10) await evento.update({eventId : evento.eventId}, {helps: evento.helps})
+        else await evento.update({eventId : evento.eventId}, {helps: evento.helps, valid: false})
+
+        
+    }
+
   }
 
-module.exports = Controller
+  module.exports = Controller
+
+
+
+
 

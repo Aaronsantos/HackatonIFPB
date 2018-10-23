@@ -7,10 +7,11 @@ var appRouter = function (app) {
       res.status(200).send("Welcome to our restful API");
     });
 
-    app.get("/emergencias", function(req,res) {
+    app.get("/emergencias", async function(req,res) {
 
-
-      res.status(200).send("todas emergencias")
+      res.setHeader('content-Type', 'application/json' );
+      eventos = await Controller.pegaTodosEventos()
+      res.status(200).send(JSON.stringify(eventos))
     });
 
     app.get("/emergencia/:num", function(req, res) {
@@ -21,9 +22,32 @@ var appRouter = function (app) {
 
     app.post("/emergencia", async function(req, res) {
 
-      var tipo = {event : req.body.event}
+      var novoEvento = {
+        eventId: req.body.eventId,
+        event: req.body.event,
+        started: req.body.started, 
+        vallid: true,
+        location: {
+            street: req.body.street,
+            district: req.body.district,
+            city: req.body.city,
+            url: req.body.locationUrl, 
+        },
+        user: {
+            idAuth: req.body.userid,
+            nome: req.body.userNome, 
+            imgUrl: req.body.userImg,
+            relaciono: req.body.userRel , 
+            identifico: req.body.userIdent , 
+            etnia: req.body.userEtnia ,
+            apelido:  req.body.userApelido
+        },
+        views: 0, 
+        helps: 0
+    }
       console.log("Rota cadastra evento")
-      await Controller.cadastraEvento(tipo)
+      await Controller.cadastraEvento(evento)
+      res.status(200).send
       
     });
     
@@ -39,8 +63,8 @@ var appRouter = function (app) {
         apelido: req.body.apelido,
         nome: req.body.nome,
         imgUrl: req.body.imgUrl, 
-
       }
+
 
       try{
         console.log("Chamando controller")
@@ -54,6 +78,15 @@ var appRouter = function (app) {
 
       res.status(200).send()
     });
+
+
+    app.post("/emergencia/:num/ajudar", async function(req,res) {
+
+      let num = req.params.num 
+
+      await Controller.ajudar(num)
+
+    })
     
   }
 
